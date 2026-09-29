@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calculadora de Copilot Credits — Estima el costo antes de construir</title>
+<style>
+  :root{
+    --bg:#f5f6f8;
+    --panel:#ffffff;
+    --ink:#14181f;
+    --muted:#5b6472;
+    --line:#dfe3ea;
+    --accent:#0b5cab;
+    --accent-soft:#e8f0fa;
+    --warn:#8a4b00;
+    --warn-soft:#fff4e5;
+    --ok:#0a6b3d;
+    --ok-soft:#e7f5ee;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    line-height:1.55;
+  }
+  .wrap{max-width:1060px;margin:0 auto;padding:28px 20px 72px}
+  header.page{margin-bottom:24px}
+  h1{font-size:27px;margin:0 0 8px;letter-spacing:-.3px}
+  .sub{color:var(--muted);font-size:15px;margin:0;max-width:70ch}
+  .disclaimer{
+    background:var(--warn-soft);
+    border-left:3px solid var(--warn);
+    padding:12px 16px;
+    border-radius:0 8px 8px 0;
+    margin:20px 0 26px;
+    font-size:13.5px;
+    color:#5c3d10;
+  }
+  .disclaimer strong{color:var(--warn)}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+  @media (max-width:900px){.grid{grid-template-columns:1fr}}
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:22px;
+  }
+  .panel h2{font-size:16px;margin:0 0 4px;color:var(--accent)}
+  .panel .hint{font-size:13px;color:var(--muted);margin:0 0 18px}
+  label{display:block;font-size:13.5px;font-weight:600;margin:16px 0 6px}
+  label:first-of-type{margin-top:0}
+  label .note{font-weight:400;color:var(--muted);font-size:12.5px;display:block;margin-top:2px}
+  input[type=number],select{
+    width:100%;
+    padding:9px 11px;
+    border:1px solid var(--line);
+    border-radius:7px;
+    font-size:14.5px;
+    font-family:inherit;
+    background:#fff;
+    color:var(--ink);
+  }
+  input[type=number]:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+  .mix-row{
+    display:grid;
+    grid-template-columns:1fr 86px 62px;
+    gap:10px;
+    align-items:center;
+    padding:9px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .mix-row:last-child{border-bottom:none}
+  .mix-row .name{font-size:13.5px}
+  .mix-row .name small{display:block;color:var(--muted);font-size:11.5px}
+  .mix-row .rate{
+    font-size:12.5px;
+    color:var(--muted);
+    text-align:right;
+    white-space:nowrap;
+  }
+  .mix-row input{padding:7px 9px;font-size:13.5px;text-align:right}
+  .total-pct{
+    margin-top:12px;
+    font-size:13px;
+    padding:9px 12px;
+    border-radius:7px;
+    background:var(--accent-soft);
+    color:var(--accent);
+    font-weight:600;
+  }
+  .total-pct.bad{background:var(--warn-soft);color:var(--warn)}
+  .results{position:sticky;top:20px}
+  .headline{
+    background:var(--accent);
+    color:#fff;
+    border-radius:10px;
+    padding:20px 22px;
+    margin-bottom:16px;
+  }
+  .headline .label{font-size:12.5px;opacity:.85;text-transform:uppercase;letter-spacing:.5px}
+  .headline .value{font-size:34px;font-weight:700;line-height:1.15;margin:4px 0 2px}
+  .headline .range{font-size:13.5px;opacity:.9}
+  .metric{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    padding:10px 0;
+    border-bottom:1px solid var(--line);
+    font-size:14px;
+  }
+  .metric:last-of-type{border-bottom:none}
+  .metric .k{color:var(--muted)}
+  .metric .v{font-weight:600;font-variant-numeric:tabular-nums}
+  .rec{
+    margin-top:16px;
+    padding:13px 15px;
+    border-radius:8px;
+    font-size:13.5px;
+    background:var(--ok-soft);
+    border-left:3px solid var(--ok);
+    color:#0d4f2f;
+  }
+  .rec.warn{background:var(--warn-soft);border-left-color:var(--warn);color:#5c3d10}
+  .rec strong{display:block;margin-bottom:3px}
+  .breakdown{margin-top:20px}
+  .breakdown h3{font-size:13.5px;margin:0 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+  .bar{
+    display:flex;
+    height:9px;
+    border-radius:5px;
+    overflow:hidden;
+    margin-bottom:12px;
+    background:var(--line);
+  }
+  .bar span{display:block;height:100%}
+  .legend{font-size:12.5px;color:var(--muted)}
+  .legend div{display:flex;align-items:center;gap:7px;padding:3px 0}
+  .legend i{width:9px;height:9px;border-radius:2px;flex:0 0 9px}
+  .actions{margin-top:22px;display:flex;gap:10px;flex-wrap:wrap}
+  button{
+    font-family:inherit;
+    font-size:13.5px;
+    font-weight:600;
+    padding:9px 16px;
+    border-radius:7px;
+    border:1px solid var(--accent);
+    background:var(--accent);
+    color:#fff;
+    cursor:pointer;
+  }
+  button.ghost{background:#fff;color:var(--accent)}
+  button:hover{opacity:.9}
+  details{margin-top:26px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:0 22px}
+  details summary{
+    cursor:pointer;
+    font-weight:600;
+    font-size:15px;
+    padding:18px 0;
+    color:var(--accent);
+  }
+  details[open] summary{border-bottom:1px solid var(--line);margin-bottom:16px}
+  details .body{padding-bottom:22px;font-size:14px}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin:10px 0 18px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+  th{color:var(--muted);font-weight:600;font-size:12.5px;text-transform:uppercase;letter-spacing:.3px}
+  td.num{text-align:right;font-variant-numeric:tabular-nums}
+  footer.page{margin-top:34px;padding-top:18px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}
+  footer.page a{color:var(--accent)}
+  code{background:#eef1f5;padding:1px 5px;border-radius:4px;font-size:12.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="page">
+  <h1>Calculadora de Copilot Credits</h1>
+  <p class="sub">Estima el costo mensual de un agente de Copilot Studio <strong>antes</strong> de construirlo o cotizarlo. Todos los supuestos son visibles y editables.</p>
+</header>
+
+<div class="disclaimer">
+  <strong>Esto es una estimación, no una cotización.</strong> Las tarifas de crédito cambian y el consumo real depende de cómo se comporten los usuarios. Verifica siempre contra la
+  <a href="https://learn.microsoft.com/en-us/microsoft-copilot-studio/billing-licensing" target="_blank" rel="noopener">documentación oficial de Microsoft</a>
+  antes de comprometer presupuesto. Tarifas verificadas por última vez: septiembre 2026.
+</div>
+
+<div class="grid">
+
+  <!-- ============ INPUTS ============ -->
+  <div>
+    <div class="panel">
+      <h2>1. Volumen</h2>
+      <p class="hint">Cuántas interacciones esperas al mes.</p>
+
+      <label>Conversaciones al mes
+        <span class="note">Una conversación = una sesión completa de un usuario con el agente.</span>
+        <input type="number" id="conversations" value="2000" min="0" step="100">
+      </label>
+
+      <label>Turnos promedio por conversación
+        <span class="note">Cada ida y vuelta cuenta. Un agente de FAQ suele estar entre 2 y 4; uno de proceso, entre 6 y 12.</span>
+        <input type="number" id="turns" value="4" min="1" step="1">
+      </label>
+    </div>
+
+    <div class="panel" style="margin-top:20px">
+      <h2>2. Mezcla de interacciones</h2>
+      <p class="hint">Qué porcentaje de los turnos usa cada capacidad. Esto es lo que más mueve el costo final.</p>
+      <div id="mixRows"></div>
+      <div class="total-pct" id="pctTotal">Total: 100%</div>
+    </div>
+
+    <div class="panel" style="margin-top:20px">
+      <h2>3. Licenciamiento</h2>
+      <p class="hint">Define qué parte del consumo está exenta y cómo se compra la capacidad.</p>
+
+      <label>Tipo de agente
+        <input type="hidden">
+        <select id="audience">
+          <option value="internal-licensed">Interno — usuarios CON licencia M365 Copilot</option>
+          <option value="internal-unlicensed" selected>Interno — usuarios SIN licencia M365 Copilot</option>
+          <option value="external">Externo (sitio web, WhatsApp, app pública)</option>
+          <option value="github-harness">Harness de GitHub Copilot (siempre factura)</option>
+        </select>
+      </label>
+
+      <label>Modelo de compra
+        <select id="purchase">
+          <option value="payg" selected>Pay-as-you-go ($0.01 / crédito)</option>
+          <option value="pack">Paquete de capacidad ($200 por 25.000 créditos)</option>
+        </select>
+      </label>
+
+      <label>Margen de incertidumbre
+        <span class="note">Cuánto ensanchar el rango alto/bajo. 30% es un valor prudente para una primera estimación.</span>
+        <select id="uncertainty">
+          <option value="0.15">±15% — tengo datos de un piloto real</option>
+          <option value="0.30" selected>±30% — estimación informada</option>
+          <option value="0.50">±50% — no tengo datos, es una corazonada</option>
+        </select>
+      </label>
+    </div>
+  </div>
+
+  <!-- ============ RESULTS ============ -->
+  <div class="results">
+    <div class="panel">
+      <div class="headline">
+        <div class="label">Costo mensual estimado</div>
+        <div class="value" id="costCentral">$0</div>
+        <div class="range" id="costRange">rango: $0 – $0</div>
+      </div>
+
+      <div class="metric"><span class="k">Turnos totales al mes</span><span class="v" id="mTurns">0</span></div>
+      <div class="metric"><span class="k">Créditos consumidos</span><span class="v" id="mCredits">0</span></div>
+      <div class="metric"><span class="k">Créditos facturables</span><span class="v" id="mBillable">0</span></div>
+      <div class="metric"><span class="k">Costo por conversación</span><span class="v" id="mPerConv">$0</span></div>
+      <div class="metric"><span class="k">Costo anual estimado</span><span class="v" id="mAnnual">$0</span></div>
+
+      <div class="breakdown">
+        <h3>De dónde viene el consumo</h3>
+        <div class="bar" id="bar"></div>
+        <div class="legend" id="legend"></div>
+      </div>
+
+      <div id="recs"></div>
+
+      <div class="actions">
+        <button onclick="copySummary()">Copiar resumen</button>
+        <button class="ghost" onclick="window.print()">Imprimir / PDF</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ============ REFERENCE ============ -->
+<details>
+  <summary>Tabla de tarifas y cómo se apilan los créditos</summary>
+  <div class="body">
+    <p>Un solo turno puede consumir varios tipos de crédito a la vez. Este es el punto que más se subestima al presupuestar.</p>
+
+    <table>
+      <thead><tr><th>Capacidad</th><th class="num">Créditos por interacción</th><th>Qué es</th></tr></thead>
+      <tbody id="rateTable"></tbody>
+    </table>
+
+    <h3 style="font-size:14px;color:var(--ink);margin-top:22px">Ejemplo oficial de Microsoft: cómo se apilan</h3>
+    <table>
+      <thead><tr><th>Escenario</th><th class="num">Créditos por respuesta</th></tr></thead>
+      <tbody>
+        <tr><td>Agente con grounding de tenant graph<br><small style="color:var(--muted)">10 (grounding) + 2 (respuesta generativa)</small></td><td class="num">12</td></tr>
+        <tr><td>El mismo agente, agregando razonamiento<br><small style="color:var(--muted)">10 + 2 + 100 (modelo de razonamiento)</small></td><td class="num">112</td></tr>
+      </tbody>
+    </table>
+    <p style="color:var(--muted);font-size:13px">La misma pregunta pasa de 12 a 112 créditos. Ese salto de casi 10x es la razón principal por la que un presupuesto basado en un demo con temas guionados se queda corto frente a la realidad de producción.</p>
+
+    <h3 style="font-size:14px;color:var(--ink);margin-top:22px">Sobre las exenciones de licencia</h3>
+    <p>Los usuarios internos <strong>con licencia de Microsoft 365 Copilot</strong> no consumen créditos organizacionales al usar agentes dentro de Teams, SharePoint o Copilot Chat (escenarios empleado-a-empresa), sujeto a límites de uso justo.</p>
+    <p><strong>Dos excepciones importantes:</strong> los agentes de cara al exterior (sitios web, WhatsApp, apps públicas) consumen créditos sin excepción, sin importar qué licencia tenga nadie. Y el <strong>harness de GitHub Copilot</strong> en Copilot Studio no tiene esta exención en absoluto: factura siempre, incluso durante la fase de construcción, no solo en ejecución.</p>
+  </div>
+</details>
+
+<details>
+  <summary>Cómo usar esto en una conversación real con un cliente</summary>
+  <div class="body">
+    <p><strong>1. No entregues un número, entrega un rango con supuestos visibles.</strong> La pantalla completa —no solo el total— es el entregable. Si el cliente puede ver que asumiste 4 turnos por conversación y 30% de respuestas generativas, puede corregirte antes de que el número sea un compromiso.</p>
+    <p><strong>2. Corre dos escenarios, no uno.</strong> Uno conservador (mayormente temas guionados) y uno realista (mezcla generativa alta). La diferencia entre ambos suele ser lo que abre la conversación de arquitectura: "¿de verdad necesitamos grounding en cada turno, o solo en algunos?"</p>
+    <p><strong>3. Pilotea con pay-as-you-go antes de comprometer un paquete.</strong> Un paquete de capacidad sale más barato por crédito, pero solo si lo consumes completo — y los créditos no acumulados se pierden al final del mes. Mide un mes real antes de comprometerte.</p>
+    <p><strong>4. El costo es un problema de arquitectura, no de precio.</strong> Si el número sale alto, la palanca no es negociar el crédito: es revisar si el agente necesita grounding en cada turno, o si un tema guionado resuelve el 60% de las preguntas frecuentes.</p>
+  </div>
+</details>
+
+<footer class="page">
+  <p>Hecho para la comunidad de Power Platform. Código abierto bajo licencia MIT — adáptalo, corrige las tarifas cuando cambien, y abre un PR si encuentras un error.</p>
+  <p>Fuente de tarifas: <a href="https://learn.microsoft.com/en-us/microsoft-copilot-studio/billing-licensing" target="_blank" rel="noopener">Microsoft Learn — Copilot Studio billing and licensing</a></p>
+</footer>
+
+</div>
+
+<script>
+// ===== Rate card (mirrors rate-card.json; kept inline so the file works offline) =====
+const RATES = [
+  { id:'classic',    label:'Respuesta clásica',      sub:'tema con guion',              credits:1,   color:'#0b5cab', defaultPct:40 },
+  { id:'generative', label:'Respuesta generativa',   sub:'el modelo compone la respuesta', credits:2, color:'#2f8fd6', defaultPct:40 },
+  { id:'action',     label:'Acción de agente',       sub:'llama una herramienta o flujo', credits:5,  color:'#6fb3e0', defaultPct:15 },
+  { id:'grounding',  label:'Grounding tenant graph', sub:'recuperación sobre el grafo',  credits:10,  color:'#e0a030', defaultPct:5  },
+  { id:'autonomous', label:'Acción autónoma',        sub:'el agente decide y actúa solo', credits:25, color:'#d4622a', defaultPct:0  },
+  { id:'reasoning',  label:'Modelo de razonamiento', sub:'~100 créditos / 10 respuestas', credits:10, color:'#a03b6b', defaultPct:0  }
+];
+
+const PRICING = {
+  payg: { perCredit:0.01,  label:'pay-as-you-go' },
+  pack: { perCredit:0.008, packSize:25000, packPrice:200, label:'paquete de capacidad' }
+};
+
+// ===== Build the mix inputs =====
+const mixRows = document.getElementById('mixRows');
+RATES.forEach(r => {
+  const row = document.createElement('div');
+  row.className = 'mix-row';
+  row.innerHTML = `
+    <div class="name">${r.label}<small>${r.sub}</small></div>
+    <input type="number" id="pct-${r.id}" value="${r.defaultPct}" min="0" max="100" step="5" aria-label="Porcentaje de ${r.label}">
+    <div class="rate">${r.credits} cr.</div>
+  `;
+  mixRows.appendChild(row);
+});
+
+// ===== Build the reference rate table =====
+const rateTable = document.getElementById('rateTable');
+RATES.forEach(r => {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>${r.label}</td><td class="num">${r.credits}</td><td style="color:var(--muted)">${r.sub}</td>`;
+  rateTable.appendChild(tr);
+});
+
+// ===== Calculation =====
+function fmt(n, dec = 0) {
+  return n.toLocaleString('es-CO', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+}
+function money(n) {
+  if (n >= 1000) return '$' + fmt(Math.round(n));
+  return '$' + fmt(n, 2);
+}
+
+function calculate() {
+  const conversations = +document.getElementById('conversations').value || 0;
+  const turns         = +document.getElementById('turns').value || 0;
+  const audience      = document.getElementById('audience').value;
+  const purchase      = document.getElementById('purchase').value;
+  const uncertainty   = +document.getElementById('uncertainty').value;
+
+  const totalTurns = conversations * turns;
+
+  // Percentages
+  let pctSum = 0;
+  const mix = RATES.map(r => {
+    const pct = +document.getElementById('pct-' + r.id).value || 0;
+    pctSum += pct;
+    return { ...r, pct };
+  });
+
+  const pctEl = document.getElementById('pctTotal');
+  pctEl.textContent = `Total: ${pctSum}%` + (pctSum !== 100 ? ' — debería sumar 100%' : '');
+  pctEl.className = 'total-pct' + (pctSum !== 100 ? ' bad' : '');
+
+  // Credits per component
+  let totalCredits = 0;
+  const perComponent = mix.map(r => {
+    const credits = totalTurns * (r.pct / 100) * r.credits;
+    totalCredits += credits;
+    return { ...r, credits };
+  });
+
+  // License exemption
+  let billableCredits = totalCredits;
+  let exemptionNote = null;
+  if (audience === 'internal-licensed') {
+    billableCredits = 0;
+    exemptionNote = {
+      type: 'ok',
+      title: 'Sin consumo de créditos organizacionales',
+      body: 'Los usuarios internos con licencia M365 Copilot usando agentes dentro de Teams, SharePoint o Copilot Chat están exentos, sujeto a límites de uso justo. Si el agente también atiende usuarios externos o sin licencia, corre el escenario de nuevo con esa audiencia.'
+    };
+  } else if (audience === 'github-harness') {
+    exemptionNote = {
+      type: 'warn',
+      title: 'El harness de GitHub Copilot no tiene exención',
+      body: 'Factura créditos siempre, incluso para usuarios con licencia M365 Copilot, y cobra desde la fase de construcción (previews, pruebas, instrucciones generadas), no solo en ejecución. Presupuesta también el tiempo de desarrollo, no solo producción.'
+    };
+  } else if (audience === 'external') {
+    exemptionNote = {
+      type: 'warn',
+      title: 'Agente externo: sin exención posible',
+      body: 'Los agentes de cara al exterior (web, WhatsApp, apps públicas) consumen créditos sin importar qué licencias tenga la organización.'
+    };
+  }
+
+  // Cost
+  const p = PRICING[purchase];
+  let cost = billableCredits * p.perCredit;
+  let packNote = null;
+  if (purchase === 'pack' && billableCredits > 0) {
+    const packsNeeded = Math.ceil(billableCredits / p.packSize);
+    const packCost = packsNeeded * p.packPrice;
+    const utilization = (billableCredits / (packsNeeded * p.packSize)) * 100;
+    cost = packCost;
+    if (utilization < 70) {
+      packNote = {
+        type: 'warn',
+        title: `Estás usando solo ${Math.round(utilization)}% del paquete`,
+        body: `Necesitas ${packsNeeded} paquete(s) = ${money(packCost)}/mes, pero solo consumes ${fmt(Math.round(billableCredits))} de ${fmt(packsNeeded * p.packSize)} créditos. A este nivel de uso, pay-as-you-go te costaría ${money(billableCredits * PRICING.payg.perCredit)}/mes. Los créditos no usados no se acumulan al mes siguiente.`
+      };
+    }
+  }
+
+  const low  = cost * (1 - uncertainty);
+  const high = cost * (1 + uncertainty);
+
+  // Render headline
+  document.getElementById('costCentral').textContent = money(cost);
+  document.getElementById('costRange').textContent = `rango: ${money(low)} – ${money(high)} al mes`;
+
+  document.getElementById('mTurns').textContent    = fmt(totalTurns);
+  document.getElementById('mCredits').textContent  = fmt(Math.round(totalCredits));
+  document.getElementById('mBillable').textContent = fmt(Math.round(billableCredits));
+  document.getElementById('mPerConv').textContent  = conversations > 0 ? money(cost / conversations) : '$0';
+  document.getElementById('mAnnual').textContent   = money(cost * 12);
+
+  // Bar + legend
+  const bar = document.getElementById('bar');
+  const legend = document.getElementById('legend');
+  bar.innerHTML = '';
+  legend.innerHTML = '';
+  const active = perComponent.filter(c => c.credits > 0).sort((a,b) => b.credits - a.credits);
+  active.forEach(c => {
+    const share = totalCredits > 0 ? (c.credits / totalCredits) * 100 : 0;
+    const seg = document.createElement('span');
+    seg.style.width = share + '%';
+    seg.style.background = c.color;
+    seg.title = `${c.label}: ${Math.round(share)}%`;
+    bar.appendChild(seg);
+
+    const li = document.createElement('div');
+    li.innerHTML = `<i style="background:${c.color}"></i> ${c.label} — ${Math.round(share)}% del consumo (${fmt(Math.round(c.credits))} créditos)`;
+    legend.appendChild(li);
+  });
+  if (active.length === 0) {
+    legend.innerHTML = '<div style="color:var(--muted)">Define la mezcla de interacciones para ver el desglose.</div>';
+  }
+
+  // Recommendations
+  const recs = document.getElementById('recs');
+  recs.innerHTML = '';
+  const notes = [];
+
+  if (exemptionNote) notes.push(exemptionNote);
+  if (packNote) notes.push(packNote);
+
+  // Architecture insight: is grounding/autonomous dominating?
+  const heavy = active.find(c => (c.id === 'grounding' || c.id === 'autonomous' || c.id === 'reasoning'));
+  if (heavy && totalCredits > 0 && (heavy.credits / totalCredits) > 0.4) {
+    notes.push({
+      type: 'warn',
+      title: 'Una sola capacidad domina tu costo',
+      body: `"${heavy.label}" representa ${Math.round((heavy.credits/totalCredits)*100)}% del consumo total, aunque sea solo ${heavy.pct}% de los turnos. Antes de aceptar este costo, vale la pena revisar si esa capacidad se necesita en cada turno o solo en algunos casos concretos.`
+    });
+  }
+
+  if (purchase === 'payg' && billableCredits > 25000) {
+    const packsNeeded = Math.ceil(billableCredits / PRICING.pack.packSize);
+    const packCost = packsNeeded * PRICING.pack.packPrice;
+    if (packCost < cost) {
+      notes.push({
+        type: 'ok',
+        title: 'Un paquete de capacidad te saldría más barato',
+        body: `Con este volumen, ${packsNeeded} paquete(s) costarían ${money(packCost)}/mes frente a ${money(cost)} en pay-as-you-go. Mide un mes real de consumo antes de comprometerte a un plan anual.`
+      });
+    }
+  }
+
+  if (pctSum !== 100) {
+    notes.unshift({
+      type: 'warn',
+      title: 'La mezcla no suma 100%',
+      body: `Actualmente suma ${pctSum}%. El cálculo sigue funcionando, pero el resultado no representa una conversación completa hasta que ajustes los porcentajes.`
+    });
+  }
+
+  notes.forEach(n => {
+    const div = document.createElement('div');
+    div.className = 'rec' + (n.type === 'warn' ? ' warn' : '');
+    div.innerHTML = `<strong>${n.title}</strong>${n.body}`;
+    recs.appendChild(div);
+  });
+}
+
+function copySummary() {
+  const conversations = document.getElementById('conversations').value;
+  const turns = document.getElementById('turns').value;
+  const audience = document.getElementById('audience').selectedOptions[0].text;
+  const purchase = document.getElementById('purchase').selectedOptions[0].text;
+  const mixText = RATES
+    .map(r => ({ label: r.label, pct: +document.getElementById('pct-' + r.id).value }))
+    .filter(r => r.pct > 0)
+    .map(r => `  - ${r.label}: ${r.pct}%`)
+    .join('\n');
+
+  const text = `ESTIMACIÓN DE COPILOT CREDITS
+(estimación, no cotización — verificar contra documentación oficial de Microsoft)
+
+Supuestos:
+- Conversaciones/mes: ${conversations}
+- Turnos por conversación: ${turns}
+- Audiencia: ${audience}
+- Compra: ${purchase}
+
+Mezcla de interacciones:
+${mixText}
+
+Resultado:
+- Turnos totales/mes: ${document.getElementById('mTurns').textContent}
+- Créditos consumidos: ${document.getElementById('mCredits').textContent}
+- Créditos facturables: ${document.getElementById('mBillable').textContent}
+- Costo mensual estimado: ${document.getElementById('costCentral').textContent}
+- ${document.getElementById('costRange').textContent}
+- Costo anual estimado: ${document.getElementById('mAnnual').textContent}
+- Costo por conversación: ${document.getElementById('mPerConv').textContent}
+
+Generado con la Calculadora de Copilot Credits (open source, MIT).`;
+
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = event.target;
+    const original = btn.textContent;
+    btn.textContent = 'Copiado';
+    setTimeout(() => { btn.textContent = original; }, 1600);
+  });
+}
+
+// Wire up all inputs
+document.querySelectorAll('input, select').forEach(el => {
+  el.addEventListener('input', calculate);
+});
+calculate();
+</script>
+</body>
+</html>

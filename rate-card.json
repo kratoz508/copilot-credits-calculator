@@ -1,0 +1,93 @@
+{
+  "_comment": "Rate card for Copilot Studio Copilot Credits. Rates verified against multiple independent sources as of September 2026. ALWAYS verify against https://learn.microsoft.com/en-us/microsoft-copilot-studio/billing-licensing before committing budget.",
+  "_lastVerified": "2026-09-11",
+  "_officialSource": "https://learn.microsoft.com/en-us/microsoft-copilot-studio/billing-licensing",
+  "pricing": {
+    "payAsYouGo": {
+      "pricePerCredit": 0.01,
+      "currency": "USD",
+      "commitment": "none",
+      "notes": "Billed through a linked Azure subscription. No discount, no cap, but admins can set per-agent monthly limits."
+    },
+    "capacityPack": {
+      "credits": 25000,
+      "pricePerMonth": 200,
+      "effectivePricePerCredit": 0.008,
+      "currency": "USD",
+      "commitment": "annual",
+      "notes": "Unused credits do NOT roll over to the next month. Underusing a pack raises your effective rate above pay-as-you-go."
+    }
+  },
+  "creditRates": [
+    {
+      "id": "classic-answer",
+      "label": "Respuesta clásica (tema con guion)",
+      "labelEn": "Classic answer (scripted topic)",
+      "creditsPerInteraction": 1,
+      "description": "Un flujo determinista respondiendo una pregunta conocida. El caso más barato."
+    },
+    {
+      "id": "generative-answer",
+      "label": "Respuesta generativa",
+      "labelEn": "Generative answer",
+      "creditsPerInteraction": 2,
+      "description": "El modelo recupera y compone la respuesta en vez de seguir un guion fijo."
+    },
+    {
+      "id": "agent-action",
+      "label": "Acción de agente / llamada a herramienta",
+      "labelEn": "Agent action / tool call",
+      "creditsPerInteraction": 5,
+      "description": "El agente invoca una herramienta, conector o flujo para hacer algo."
+    },
+    {
+      "id": "tenant-graph-grounding",
+      "label": "Grounding con tenant graph",
+      "labelEn": "Tenant graph grounding",
+      "creditsPerInteraction": 10,
+      "description": "Recuperación avanzada usando el grafo del tenant (relaciones entre personas, archivos, sitios). Mejora precisión, pero es el multiplicador más costoso en uso cotidiano."
+    },
+    {
+      "id": "autonomous-action",
+      "label": "Acción autónoma",
+      "labelEn": "Autonomous action",
+      "creditsPerInteraction": 25,
+      "description": "El agente decide y actúa por su cuenta, sin que un humano dispare cada paso."
+    },
+    {
+      "id": "reasoning-model",
+      "label": "Modelo de razonamiento",
+      "labelEn": "Reasoning model",
+      "creditsPerInteraction": 10,
+      "description": "Aproximadamente 100 créditos por cada 10 respuestas. Se apila sobre los demás costos de la misma interacción."
+    }
+  ],
+  "stackingExamples": [
+    {
+      "label": "Agente con grounding de tenant graph (ejemplo oficial de Microsoft)",
+      "breakdown": [
+        { "component": "tenant-graph-grounding", "credits": 10 },
+        { "component": "generative-answer", "credits": 2 }
+      ],
+      "totalCredits": 12
+    },
+    {
+      "label": "El mismo agente, agregando razonamiento",
+      "breakdown": [
+        { "component": "tenant-graph-grounding", "credits": 10 },
+        { "component": "generative-answer", "credits": 2 },
+        { "component": "reasoning-model", "credits": 100 }
+      ],
+      "totalCredits": 112,
+      "note": "Este es el salto que rompe los presupuestos: la misma pregunta pasa de 12 a 112 créditos."
+    }
+  ],
+  "licenseExemptions": {
+    "m365CopilotLicensed": {
+      "applies": "Usuarios internos con licencia de Microsoft 365 Copilot, usando agentes dentro de Teams, SharePoint o Copilot Chat (escenarios B2E).",
+      "consumesCredits": false,
+      "caveat": "Sujeto a límites de uso justo. NO aplica a agentes de cara al exterior (sitios web, WhatsApp, apps públicas), que consumen créditos sin excepción.",
+      "importantExclusion": "El harness de GitHub Copilot en Copilot Studio NO tiene esta exención: consume créditos siempre, incluso para usuarios con licencia M365 Copilot, y cobra desde la fase de construcción, no solo en ejecución."
+    }
+  }
+}
